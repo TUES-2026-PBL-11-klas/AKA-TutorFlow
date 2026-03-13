@@ -1,0 +1,38 @@
+#!/bin/sh
+
+PATTERNS="password\s*=\s*['\"][^'\"]+['\"]|passwd\s*=\s*['\"][^'\"]+['\"]|secret\s*=\s*['\"][^'\"]+['\"]|api_key\s*=\s*['\"][^'\"]+['\"]|private_key\s*=\s*['\"][^'\"]+['\"]|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|sk-or-[A-Za-z0-9_-]+"
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+FOUND=0
+
+for FILE in $STAGED; do
+  case "$FILE" in
+    *.env.example|*.lock|package-lock.json) continue ;;
+  esac
+
+  if git show ":$FILE" | grep -Ei "$PATTERNS" > /dev/null 2>&1; then
+    echo "Potential secret detected in: $FILE"
+    FOUND=1
+  fi
+done
+
+if [ "$FOUND" -eq 1 ]; then
+  echo "\nCommit blocked: remove hardcoded secrets before committing."
+  echo "Use environment variables and .env files instead."
+  exit 1
+fi
+
+echo "Running build check..."
+ROOT="$(git rev-parse --show-toplevel)"
+"$ROOT/node_modules/.bin/next" build "$ROOT"
+if [ $? -ne 0 ]; then
+  echo "\nCommit blocked: build failed. Fix the errors above before committing."
+  exit 1
+fi
+
+exit 0
