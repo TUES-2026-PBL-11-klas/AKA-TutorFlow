@@ -1,22 +1,22 @@
-# AI Study Helper – Product Requirements & Business Logic (V1)
+# AI Study Helper – Product Requirements & Business Logic
 
 ## 1. Product Overview
 
-The AI Study Helper is an educational platform that helps students generate study materials using artificial intelligence. The system allows students to organize their learning by grade level and custom subjects, upload or reference learning materials, and generate structured study resources such as summaries, flashcards, and tests.
+The AI Study Helper is an educational platform that helps students generate study materials using artificial intelligence. The system allows students to organize their learning by grade level and custom subjects, upload learning materials, and generate structured study resources such as summaries, flashcards, and tests.
 
 The goal of the system is to reduce the effort required for students to prepare for exams by automatically transforming topics or learning materials into useful study formats.
 
 Unlike many rigid educational systems, the platform allows students to create their own subjects and topics. This makes the system flexible enough to support different school curricula, personal study topics, or exam preparation materials.
 
-In version 1, the AI will rely primarily on user-provided input (topics, terms, questions, and grade level) to generate study content. More advanced contextual learning systems such as Retrieval-Augmented Generation (RAG) will be introduced in a later version.
+The AI generates study content based on user-provided input (topics, terms, grade level) and uploaded materials. When a student uploads files, the system processes them through a RAG pipeline so that generated content is grounded in their own textbooks and notes.
 
 ---
 
 # 2. User Model
 
-The system currently focuses on a single primary user type: the **student**.
+The system focuses on a single primary user type: the **student**.
 
-Each student account stores basic information used to guide the AI’s responses and difficulty level. During registration, the student selects their **grade level**, which acts as a baseline indicator of complexity for generated content.
+Each student account stores basic information used to guide the AI's responses and difficulty level. During registration, the student selects their **grade level**, which acts as a baseline indicator of complexity for generated content.
 
 The system does not enforce a fixed curriculum. Instead, students are free to create subjects that match their own courses or interests.
 
@@ -51,13 +51,13 @@ Example topics:
 
 - Fractions
 - Linear equations
-- Shakespeare’s tragedies
+- Shakespeare's tragedies
 - Cell division
 - Photosynthesis
 
 Topics are flexible text inputs rather than rigid database entities.
 
-The system uses the **topic name together with the student’s grade level** to estimate the appropriate difficulty level.
+The system uses the **topic name together with the student's grade level** to estimate the appropriate difficulty level.
 
 ---
 
@@ -69,7 +69,7 @@ The core functionality of the platform revolves around three types of AI-generat
 2. **Flashcards**
 3. **Tests**
 
-These tools convert simple user inputs into structured learning resources.
+These tools convert user inputs and uploaded materials into structured learning resources.
 
 All generated materials are stored in the system so the student can revisit them later.
 
@@ -106,6 +106,8 @@ Example summary content might include:
 - Basic operations with fractions
 - Simple examples
 
+If the student has uploaded files under the subject, relevant chunks from those files are retrieved and injected into the prompt so the summary reflects their actual study materials.
+
 The summary feature functions as a **quick mini-study guide generator**.
 
 ---
@@ -122,7 +124,7 @@ Photosynthesis
 Chlorophyll
 Carbon dioxide
 
-The system generates a **definition or explanation** for each term.
+The system generates a **definition or explanation** for each term. If uploaded materials are available under the subject, the definitions are grounded in those materials via RAG.
 
 ### Study Modes
 
@@ -135,14 +137,6 @@ Each flashcard consists of:
 
 - Front side (question)
 - Back side (answer)
-
-Example flashcard:
-
-Front:
-A mathematical expression consisting of variables and constants combined using operations.
-
-Back:
-Algebraic expression
 
 Students can flip flashcards interactively while studying.
 
@@ -164,11 +158,6 @@ The test generator allows students to create practice exams.
 1. **Multiple Choice**
 2. **Open-ended**
 
-Example request:
-Topic: Linear Equations
-Number of Questions: 10
-Question Type: Multiple Choice
-
 ### Generated Test Structure
 
 Each generated test contains:
@@ -177,6 +166,8 @@ Each generated test contains:
 - Answer options (for multiple choice)
 - Correct answer
 - Optional explanation
+
+If uploaded materials are available under the subject, questions are generated based on the content of those materials via RAG.
 
 After completing a test, the system automatically grades the answers and displays the score.
 
@@ -228,18 +219,21 @@ This allows the system to function as a **long-term study repository**.
 
 # 10. File Uploads
 
-Students may optionally upload learning materials such as:
+Students may upload learning materials such as:
 
 - Textbook photos
 - Notes
 - Worksheets
 - PDFs
 
-In Version 1 these uploads are mainly stored for reference.
+When a file is uploaded, it is processed through the RAG pipeline:
 
-Uploaded materials may optionally be included as **context in AI prompts**, but they are not yet fully analyzed or indexed.
+1. Text is extracted from the file using a vision model via **OpenRouter**
+2. The extracted text is cleaned and split into chunks
+3. Each chunk is converted into a vector embedding via **OpenRouter**
+4. The embeddings and chunks are stored in **pgvector** (Supabase's built-in vector extension), linked to the subject
 
-More advanced processing will be introduced in future versions.
+When the student generates study materials under that subject, the system performs a similarity search against the stored chunks and injects the most relevant ones into the AI prompt. This ensures generated content is based directly on the student's own materials.
 
 ---
 
@@ -254,43 +248,29 @@ The prompt includes:
 - Topic
 - Requested material type
 - Optional user notes
+- Relevant chunks retrieved from uploaded materials (if available)
 
 Example prompt structure:
+```
 You are a tutor helping a Grade 7 student study mathematics.
 Topic: Fractions
+
+Relevant material from the student's notes:
+[retrieved chunks inserted here]
+
 Generate a clear summary explaining the concept using simple language and examples.
+```
 
-The AI is instructed to behave like an **educational tutor** and provide explanations appropriate for the student's level.
+The AI is instructed to behave like an **educational tutor** and provide explanations appropriate for the student's level. When uploaded material is available, responses are grounded in that material rather than general knowledge alone.
 
----
-
-# 12. Future Improvement: Retrieval-Augmented Generation (RAG)
-
-A future version of the system will implement **Retrieval-Augmented Generation (RAG)**.
-
-This feature will allow uploaded study materials to be automatically processed and used as context when generating AI responses.
-
-The RAG pipeline will involve:
-
-1. OCR extraction from uploaded images or PDFs using a vision model via **OpenRouter**
-2. Text cleaning and chunking
-3. Conversion into embeddings via an embedding model through **OpenRouter**
-4. Storage in **pgvector** (Supabase's built-in vector extension)
-5. Retrieval of relevant chunks during AI queries via similarity search
-6. Injection of retrieved chunks into the generation prompt, also handled via **OpenRouter**
-
-This will allow the AI to generate study materials based directly on the student's own textbooks and notes.
-
-This feature is **not required for Version 1**.
+All AI calls go through **OpenRouter**.
 
 ---
 
-# 13. Summary
+# 12. Summary
 
-Version 1 of the AI Study Helper focuses on a simple workflow.
+The AI Study Helper allows students to create custom subjects and topics, upload their own study materials, and use AI tools to generate summaries, flashcards, and tests.
 
-Students create custom subjects and topics, then use AI tools to generate summaries, flashcards, and tests.
+Uploaded materials are processed through a RAG pipeline so that all generated content can be grounded in the student's own textbooks and notes.
 
-The platform acts as a lightweight AI tutor that helps students understand topics and prepare for exams more efficiently.
-
-Future versions will expand the system with deeper integration of uploaded materials and more advanced AI-driven learning capabilities.
+The platform acts as a personalised AI tutor that helps students understand topics and prepare for exams more efficiently.
