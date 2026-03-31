@@ -1,6 +1,5 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -13,15 +12,38 @@ model User {
   gradeLevel   Int
   createdAt    DateTime  @default(now())
   subjects     Subject[]
+  educationLevels EducationLevel[]
   uploadedFiles UploadedFile[]
+}
+
+enum EducationLevelType {
+  GRADE
+  SEMESTER
+}
+
+model EducationLevel {
+  id        String              @id @default(cuid())
+  userId    String
+  type      EducationLevelType
+  level     Int
+  createdAt DateTime            @default(now())
+
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjects  Subject[]
+
+  @@unique([userId, type, level])
 }
 
 model Subject {
   id            String         @id @default(cuid())
   userId        String
   name          String
+  gradeLevel    Int            @default(10)
+  semester      Int?
+  educationLevelId String?
   createdAt     DateTime       @default(now())
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  educationLevel EducationLevel? @relation(fields: [educationLevelId], references: [id], onDelete: Cascade)
   materials     Material[]
   uploadedFiles UploadedFile[]
 }
