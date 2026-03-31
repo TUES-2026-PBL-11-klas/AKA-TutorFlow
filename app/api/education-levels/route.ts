@@ -1,18 +1,18 @@
-import { ensureDevUser, requireUserId } from "@/lib/auth";
+import { validateSession } from "@/lib/auth";
 import { createEducationLevel, listEducationLevels } from "@/services/educationLevels";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-    const userId = requireUserId();
-    await ensureDevUser(userId);
+    const auth = await validateSession();
+    if (auth instanceof NextResponse) return auth;
 
-    const educationLevels = await listEducationLevels(userId);
+    const educationLevels = await listEducationLevels(auth.id);
     return NextResponse.json({ educationLevels });
 }
 
 export async function POST(request: Request) {
-    const userId = requireUserId();
-    await ensureDevUser(userId);
+    const auth = await validateSession();
+    if (auth instanceof NextResponse) return auth;
 
     let body: unknown;
     try {
@@ -40,10 +40,10 @@ export async function POST(request: Request) {
     }
 
     try {
-        const educationLevel = await createEducationLevel(userId, { type, level });
+        const educationLevel = await createEducationLevel(auth.id, { type, level });
         return NextResponse.json({ educationLevel }, { status: 201 });
     } catch (err: unknown) {
-        // Unique constraint violation (userId+type+level)
+        // Unique constraint violation (auth.id+type+level)
         if (
             typeof err === "object" &&
             err !== null &&

@@ -1,10 +1,10 @@
-import { ensureDevUser, requireUserId } from "@/lib/auth";
+import { validateSession } from "@/lib/auth";
 import { createSubject, listSubjects } from "@/services/subjects";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-    const userId = requireUserId();
-    await ensureDevUser(userId);
+    const auth = await validateSession();
+    if (auth instanceof NextResponse) return auth;
 
     const url = new URL(request.url);
     const educationLevelId = url.searchParams.get("educationLevelId")?.trim() ?? "";
@@ -12,13 +12,13 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "educationLevelId is required" }, { status: 400 });
     }
 
-    const subjects = await listSubjects(userId, educationLevelId);
+    const subjects = await listSubjects(auth.id, educationLevelId);
     return NextResponse.json({ subjects });
 }
 
 export async function POST(request: Request) {
-    const userId = requireUserId();
-    await ensureDevUser(userId);
+    const auth = await validateSession();
+    if (auth instanceof NextResponse) return auth;
 
     let body: unknown;
     try {
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "educationLevelId is required" }, { status: 400 });
     }
 
-    const subject = await createSubject(userId, {
+    const subject = await createSubject(auth.id, {
         name: trimmedName,
         educationLevelId: trimmedEducationLevelId,
     });
