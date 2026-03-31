@@ -1,18 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
-// ---------------------------------------------------------------------------
-// Supabase client (anon key — session verification is done via JWT, not admin)
-// ---------------------------------------------------------------------------
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-// ---------------------------------------------------------------------------
-// Session validation
-// ---------------------------------------------------------------------------
+import { NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase.server";
 
 export interface AuthenticatedUser {
   id: string;
@@ -20,78 +7,29 @@ export interface AuthenticatedUser {
 }
 
 /**
- * Validates the Supabase session from an incoming request.
+ * Validates the session from the incoming request cookies (set by Supabase SSR).
  *
- * Expects the request to carry a Bearer token in the Authorization header:
- *   Authorization: Bearer <access_token>
+ * Usage in a protected API route:
  *
- * Returns the authenticated user on success, or a NextResponse 401 that the
- * calling route should return immediately.
- *
- * Usage in a protected route:
- *
- *   const result = await validateSession(req);
+ *   const result = await validateSession();
  *   if (result instanceof NextResponse) return result;
  *   const { id, email } = result; // AuthenticatedUser
  */
-export async function validateSession(
-  req: NextRequest
-): Promise<AuthenticatedUser | NextResponse> {
-  const authHeader = req.headers.get("authorization");
+export async function validateSession(): Promise<
+  AuthenticatedUser | NextResponse
+> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return NextResponse.json(
-      { error: "Missing or malformed Authorization header. Expected: Bearer <token>" },
-      { status: 401 }
-    );
-  }
-
-  const accessToken = authHeader.slice(7); // Strip "Bearer "
-
-  // Verify the JWT with Supabase — this also checks expiry
-  const { data, error } = await supabase.auth.getUser(accessToken);
-
-  if (error || !data.user) {
+  if (error || !user) {
     return NextResponse.json(
       { error: "Invalid or expired session. Please log in again." },
       { status: 401 }
     );
   }
 
-  return {
-    id: data.user.id,
-    email: data.user.email!,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Dev-mode helpers (preserved from original implementation)
-// ---------------------------------------------------------------------------
-
-export const DEV_USER_ID = "00000000-0000-0000-0000-000000000000";
-
-/**
- * Temporary user-id provider.
- *
- * Today: returns a constant dev id.
- * Later: replace with `validateSession` to read the authenticated user's id.
- */
-export function requireUserId(): string {
-  return DEV_USER_ID;
-}
-
-/**
- * Prisma schema requires `User.email` and `User.gradeLevel`, so in dev-mode we
- * upsert a single placeholder user row to satisfy foreign keys.
- */
-export async function ensureDevUser(userId: string): Promise<void> {
-  await prisma.user.upsert({
-    where: { id: userId },
-    update: {},
-    create: {
-      id: userId,
-      email: "dev@tutorflow.local",
-      gradeLevel: 10,
-    },
-  });
+  return { id: user.id, email: user.email! };
 }

@@ -1,6 +1,7 @@
 #!/bin/sh
+export PATH="/Users/kristiyankulekov/.nvm/versions/node/v22.20.0/bin:$PATH"
 
-PATTERNS="password\s*=\s*['\"][^'\"]+['\"]|passwd\s*=\s*['\"][^'\"]+['\"]|secret\s*=\s*['\"][^'\"]+['\"]|api_key\s*=\s*['\"][^'\"]+['\"]|private_key\s*=\s*['\"][^'\"]+['\"]|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|sk-or-[A-Za-z0-9_-]+"
+PATTERNS="(const|let|var|export)\s+(const\s+)?PASSWORD\s*=\s*['\"][^'\"]+['\"]|(const|let|var|export)\s+(const\s+)?passwd\s*=\s*['\"][^'\"]+['\"]|(const|let|var)\s+(const\s+)?secret\s*=\s*['\"][^'\"]+['\"]|(const|let|var)\s+(const\s+)?api_key\s*=\s*['\"][^'\"]+['\"]|(const|let|var)\s+(const\s+)?private_key\s*=\s*['\"][^'\"]+['\"]|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|sk-or-[A-Za-z0-9_-]+"
 
 STAGED=$(git diff --cached --name-only --diff-filter=ACM)
 
