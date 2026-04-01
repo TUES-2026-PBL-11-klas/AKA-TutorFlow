@@ -1,4 +1,4 @@
-import { ensureDevUser, requireUserId } from "@/lib/auth";
+import { validateSession } from "@/lib/auth";
 import { deleteSubject } from "@/services/subjects";
 import { NextResponse } from "next/server";
 
@@ -6,12 +6,12 @@ export async function DELETE(
     _request: Request,
     { params }: { params: Promise<{ id: string }> },
 ) {
+    const auth = await validateSession();
+    if (auth instanceof NextResponse) return auth;
+
     const { id } = await params;
 
-    const userId = requireUserId();
-    await ensureDevUser(userId);
-
-    const deleted = await deleteSubject(userId, id);
+    const deleted = await deleteSubject(auth.id, id);
 
     if (!deleted) {
         return NextResponse.json({ error: "Not found" }, { status: 404 });

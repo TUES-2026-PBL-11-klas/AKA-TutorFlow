@@ -1,29 +1,35 @@
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase.server";
 
-export const DEV_USER_ID = "00000000-0000-0000-0000-000000000000";
-
-/**
- * Temporary user-id provider.
- *
- * Today: returns a constant dev id.
- * Later: replace implementation to read the authenticated user's id.
- */
-export function requireUserId(): string {
-    return DEV_USER_ID;
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
 }
 
 /**
- * Prisma schema requires `User.email` and `User.gradeLevel`, so in dev-mode we
- * upsert a single placeholder user row to satisfy foreign keys.
+ * Validates the session from the incoming request cookies (set by Supabase SSR).
+ *
+ * Usage in a protected API route:
+ *
+ *   const result = await validateSession();
+ *   if (result instanceof NextResponse) return result;
+ *   const { id, email } = result; // AuthenticatedUser
  */
-export async function ensureDevUser(userId: string): Promise<void> {
-    await prisma.user.upsert({
-        where: { id: userId },
-        update: {},
-        create: {
-            id: userId,
-            email: "dev@tutorflow.local",
-            gradeLevel: 10,
-        },
-    });
+export async function validateSession(): Promise<
+  AuthenticatedUser | NextResponse
+> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return NextResponse.json(
+      { error: "Invalid or expired session. Please log in again." },
+      { status: 401 }
+    );
+  }
+
+  return { id: user.id, email: user.email! };
 }

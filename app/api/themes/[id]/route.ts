@@ -1,17 +1,16 @@
-import { ensureDevUser, requireUserId } from "@/lib/auth";
-import { deleteEducationLevel } from "@/services/educationLevels";
+import { validateSession } from "@/lib/auth";
+import { deleteTheme } from "@/services/themes";
 import { NextResponse } from "next/server";
 
 export async function DELETE(
     _request: Request,
     { params }: { params: Promise<{ id: string }> },
 ) {
+    const auth = await validateSession();
+    if (auth instanceof NextResponse) return auth;
+
     const { id } = await params;
-
-    const userId = requireUserId();
-    await ensureDevUser(userId);
-
-    const deleted = await deleteEducationLevel(userId, id);
+    const deleted = await deleteTheme(auth.id, id);
 
     if (!deleted) {
         return NextResponse.json({ error: "Not found" }, { status: 404 });

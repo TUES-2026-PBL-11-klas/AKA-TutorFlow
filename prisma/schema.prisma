@@ -6,56 +6,54 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── Users ────────────────────────────────────────────────────────────────────
+
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  gradeLevel   Int
-  createdAt    DateTime  @default(now())
-  subjects     Subject[]
-  educationLevels EducationLevel[]
+  id            String         @id @default(cuid())
+  email         String         @unique
+  grade         Int
+  createdAt     DateTime       @default(now())
+
+  subjects      Subject[]
   uploadedFiles UploadedFile[]
+  testAttempts  TestAttempt[]
 }
 
-enum EducationLevelType {
-  GRADE
-  SEMESTER
-}
-
-model EducationLevel {
-  id        String              @id @default(cuid())
-  userId    String
-  type      EducationLevelType
-  level     Int
-  createdAt DateTime            @default(now())
-
-  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subjects  Subject[]
-
-  @@unique([userId, type, level])
-}
+// ─── Subjects ─────────────────────────────────────────────────────────────────
 
 model Subject {
-  id            String         @id @default(cuid())
-  userId        String
-  name          String
-  gradeLevel    Int            @default(10)
-  semester      Int?
-  educationLevelId String?
-  createdAt     DateTime       @default(now())
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  educationLevel EducationLevel? @relation(fields: [educationLevelId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  themes    Theme[]
+}
+
+// ─── Themes ───────────────────────────────────────────────────────────────────
+
+model Theme {
+  id        String         @id @default(cuid())
+  subjectId String
+  name      String
+  createdAt DateTime       @default(now())
+
+  subject       Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   materials     Material[]
   uploadedFiles UploadedFile[]
 }
 
+// ─── Materials ────────────────────────────────────────────────────────────────
+
 model Material {
-  id            String         @id @default(cuid())
-  subjectId     String
-  topic         String
-  type          MaterialType
-  content       Json
-  createdAt     DateTime       @default(now())
-  subject       Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  id        String       @id @default(cuid())
+  themeId   String
+  type      MaterialType
+  content   Json
+  createdAt DateTime     @default(now())
+
+  theme         Theme          @relation(fields: [themeId], references: [id], onDelete: Cascade)
   flashcards    Flashcard[]
   testQuestions TestQuestion[]
   testAttempts  TestAttempt[]
@@ -66,6 +64,7 @@ model Flashcard {
   materialId String
   front      String
   back       String
+
   material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
 }
 
@@ -76,28 +75,39 @@ model TestQuestion {
   options       String[]
   correctAnswer String
   explanation   String?
+
   material      Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
 }
 
 model TestAttempt {
   id          String   @id @default(cuid())
   materialId  String
+  userId      String
   score       Int
   answers     Json
   completedAt DateTime @default(now())
+
   material    Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+// ─── Uploaded files ───────────────────────────────────────────────────────────
 
 model UploadedFile {
   id        String   @id @default(cuid())
   userId    String
-  subjectId String?
+  themeId   String?
+  filename  String
   url       String
-  fileType  String
+  mimeType  String
+  sizeBytes Int
   createdAt DateTime @default(now())
+
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  theme     Theme?   @relation(fields: [themeId], references: [id], onDelete: SetNull)
 }
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum MaterialType {
   SUMMARY
