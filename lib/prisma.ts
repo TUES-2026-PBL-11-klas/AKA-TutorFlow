@@ -1,21 +1,19 @@
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
-import { createRequire } from "module";
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const g = globalThis as unknown as { __prisma?: PrismaClient };
 
-function createPrismaClient() {
-  const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error("Missing DIRECT_URL/DATABASE_URL for Prisma");
-  }
+if (!g.__prisma) {
+  const pool = new Pool({
+    connectionString: `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@aws-1-eu-west-3.pooler.supabase.com:6543/postgres?pgbouncer=true`,
+    ssl: { rejectUnauthorized: false },
+  });
 
-  const require = createRequire(import.meta.url);
-  const { PrismaPg } = require("@prisma/adapter-pg") as typeof import("@prisma/adapter-pg");
+  pool.on("error", () => {});
 
-  const adapter = new PrismaPg({ connectionString });
-  return new PrismaClient({ adapter });
+  // @ts-expect-error -- duplicate @types/pg versions (ours vs adapter's bundled copy)
+  g.__prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export const prisma = g.__prisma;

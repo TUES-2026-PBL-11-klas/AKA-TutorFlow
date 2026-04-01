@@ -8,11 +8,11 @@ function isValidGradeLevel(v: unknown): v is number {
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, gradeLevel } = await req.json();
+    const { email, password, grade } = await req.json();
 
-    if (!email || !password || gradeLevel == null) {
+    if (!email || !password || grade == null) {
       return NextResponse.json(
-        { error: "email, password, and gradeLevel are required." },
+        { error: "email, password, and grade are required." },
         { status: 400 }
       );
     }
@@ -31,9 +31,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!isValidGradeLevel(gradeLevel)) {
+    if (!isValidGradeLevel(grade)) {
       return NextResponse.json(
-        { error: "gradeLevel must be an integer between 1 and 12." },
+        { error: "grade must be an integer between 1 and 12." },
         { status: 400 }
       );
     }
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     // Create the app User record via Prisma (rollback auth user on failure)
     try {
-      await prisma.user.create({ data: { id: userId, email, gradeLevel } });
+      await prisma.user.create({ data: { id: userId, email, grade } });
     } catch (dbError) {
       console.error("[register] DB insert failed, rolling back auth user:", dbError);
       await supabase.auth.admin.deleteUser(userId);

@@ -2,17 +2,11 @@ import { validateSession } from "@/lib/auth";
 import { createSubject, listSubjects } from "@/services/subjects";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET() {
     const auth = await validateSession();
     if (auth instanceof NextResponse) return auth;
 
-    const url = new URL(request.url);
-    const educationLevelId = url.searchParams.get("educationLevelId")?.trim() ?? "";
-    if (!educationLevelId) {
-        return NextResponse.json({ error: "educationLevelId is required" }, { status: 400 });
-    }
-
-    const subjects = await listSubjects(auth.id, educationLevelId);
+    const subjects = await listSubjects(auth.id);
     return NextResponse.json({ subjects });
 }
 
@@ -27,25 +21,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    const name = typeof (body as { name?: unknown })?.name === "string" ? (body as { name: string }).name : "";
-    const trimmedName = name.trim();
-
-    const educationLevelId = typeof (body as { educationLevelId?: unknown })?.educationLevelId === "string"
-        ? ((body as { educationLevelId: string }).educationLevelId ?? "")
+    const name = typeof (body as { name?: unknown })?.name === "string"
+        ? (body as { name: string }).name.trim()
         : "";
-    const trimmedEducationLevelId = educationLevelId.trim();
 
-    if (!trimmedName) {
-        return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    if (!name) {
+        return NextResponse.json({ error: "name is required" }, { status: 400 });
     }
 
-    if (!trimmedEducationLevelId) {
-        return NextResponse.json({ error: "educationLevelId is required" }, { status: 400 });
-    }
-
-    const subject = await createSubject(auth.id, {
-        name: trimmedName,
-        educationLevelId: trimmedEducationLevelId,
-    });
+    const subject = await createSubject(auth.id, name);
     return NextResponse.json({ subject }, { status: 201 });
 }

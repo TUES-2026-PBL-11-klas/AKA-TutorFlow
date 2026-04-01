@@ -1,5 +1,5 @@
 import { validateSession } from "@/lib/auth";
-import { deleteEducationLevel } from "@/services/educationLevels";
+import { deleteTheme } from "@/services/themes";
 import { NextResponse } from "next/server";
 
 export async function DELETE(
@@ -10,8 +10,7 @@ export async function DELETE(
     if (auth instanceof NextResponse) return auth;
 
     const { id } = await params;
-
-    const deleted = await deleteEducationLevel(auth.id, id);
+    const deleted = await deleteTheme(auth.id, id);
 
     if (!deleted) {
         return NextResponse.json({ error: "Not found" }, { status: 404 });

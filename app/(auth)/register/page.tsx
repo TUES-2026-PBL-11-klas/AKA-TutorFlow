@@ -13,7 +13,7 @@ export default function RegisterPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [gradeLevel, setGradeLevel] = useState(1);
+  const [grade, setGradeLevel] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
     email?: string;
@@ -44,7 +44,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, gradeLevel }),
+        body: JSON.stringify({ email, password, grade }),
       });
 
       const data = await res.json();
@@ -127,13 +127,13 @@ export default function RegisterPage() {
         </div>
 
         <div className="field">
-          <label className="field-label" htmlFor="gradeLevel">
+          <label className="field-label" htmlFor="grade">
             Grade level
           </label>
           <select
-            id="gradeLevel"
+            id="grade"
             className="field-select"
-            value={gradeLevel}
+            value={grade}
             onChange={(e) => setGradeLevel(Number(e.target.value))}
           >
             {GRADE_OPTIONS.map((g) => (
