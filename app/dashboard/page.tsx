@@ -121,6 +121,36 @@ export default function DashboardPage() {
                     </nav>
                 </div>
 
+                {/* Subjects */}
+                {subjects.length > 0 && (
+                    <div style={{ marginTop: "1.5rem" }}>
+                        <p style={{ fontSize: "0.7rem", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-accent)", marginBottom: "0.5rem" }}>
+                            Subjects
+                        </p>
+                        <nav style={{ display: "flex", flexDirection: "column", gap: "0.125rem" }}>
+                            {subjects.map((subject) => (
+                                <Link
+                                    key={subject.id}
+                                    href={`/dashboard/subjects/${subject.id}`}
+                                    style={{
+                                        display: "block",
+                                        borderRadius: "3px",
+                                        padding: "0.4rem 0.75rem",
+                                        fontSize: "0.8125rem",
+                                        color: "var(--color-text-secondary)",
+                                        textDecoration: "none",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                    }}
+                                >
+                                    {subject.name}
+                                </Link>
+                            ))}
+                        </nav>
+                    </div>
+                )}
+
                 {/* Logout — bottom of sidebar */}
                 <div style={{ marginTop: "auto", paddingTop: "1.5rem", borderTop: "1px solid var(--color-border)" }}>
                     <button
@@ -198,28 +228,38 @@ export default function DashboardPage() {
                                 {subjects.map((subject) => (
                                     <li
                                         key={subject.id}
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                            background: "var(--color-card)",
-                                            border: "1px solid var(--color-border)",
-                                            borderRadius: "3px",
-                                            padding: "0.875rem 1rem",
-                                        }}
+                                        style={{ position: "relative" }}
                                     >
-                                        <div style={{ minWidth: 0 }}>
-                                            <p style={{ fontSize: "0.9375rem", fontWeight: 500, color: "var(--color-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                {subject.name}
-                                            </p>
-                                            <p style={{ marginTop: "0.2rem", fontSize: "0.8125rem", color: "var(--color-text-secondary)", fontWeight: 300 }}>
-                                                {new Date(subject.createdAt).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => void handleDeleteSubject(subject.id)}
+                                        <Link
+                                            href={`/dashboard/subjects/${subject.id}`}
                                             style={{
-                                                marginLeft: "1rem",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "space-between",
+                                                background: "var(--color-card)",
+                                                border: "1px solid var(--color-border)",
+                                                borderRadius: "3px",
+                                                padding: "0.875rem 1rem",
+                                                textDecoration: "none",
+                                                color: "inherit",
+                                            }}
+                                        >
+                                            <div style={{ minWidth: 0 }}>
+                                                <p style={{ fontSize: "0.9375rem", fontWeight: 500, color: "var(--color-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                    {subject.name}
+                                                </p>
+                                                <p style={{ marginTop: "0.2rem", fontSize: "0.8125rem", color: "var(--color-text-secondary)", fontWeight: 300 }}>
+                                                    {new Date(subject.createdAt).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </Link>
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); if (window.confirm(`Delete "${subject.name}"?`)) void handleDeleteSubject(subject.id); }}
+                                            style={{
+                                                position: "absolute",
+                                                right: "1rem",
+                                                top: "50%",
+                                                transform: "translateY(-50%)",
                                                 padding: "0.4rem 0.75rem",
                                                 background: "transparent",
                                                 border: "1px solid var(--color-border-solid)",
