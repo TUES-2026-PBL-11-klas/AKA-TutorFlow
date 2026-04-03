@@ -4,12 +4,24 @@ import type { SubjectDto } from "@/services/subjects";
 import type { ThemeDto } from "@/services/themes";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
+
+type UploadedFileDto = {
+    id: string;
+    themeId: string | null;
+    filename: string;
+    url: string;
+    mimeType: string;
+    sizeBytes: number;
+    createdAt: string;
+};
 
 type SubjectsResponse = { subjects: SubjectDto[] };
 type ThemesResponse = { themes: ThemeDto[] };
 type CreateThemeResponse = { theme: ThemeDto };
+type UploadResponse = { file: UploadedFileDto };
+type FilesResponse = { files: UploadedFileDto[] };
 
 type LoadState =
     | { kind: "idle" }
@@ -24,8 +36,11 @@ export default function SubjectDetailPage() {
     const [subjectName, setSubjectName] = useState<string>("");
     const [themes, setThemes] = useState<ThemeDto[]>([]);
     const [loadState, setLoadState] = useState<LoadState>({ kind: "idle" });
+    const [themeFiles, setThemeFiles] = useState<Record<string, UploadedFileDto[]>>({});
+    const [uploadingThemeId, setUploadingThemeId] = useState<string | null>(null);
     const [newThemeName, setNewThemeName] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const canSubmit = useMemo(
         () => newThemeName.trim().length > 0 && !isSubmitting,
@@ -53,6 +68,19 @@ export default function SubjectDetailPage() {
 
             setSubjectName(subject.name);
             setThemes(themesData.themes);
+
+            // Load files for each theme
+            const filesByTheme: Record<string, UploadedFileDto[]> = {};
+            await Promise.all(
+                themesData.themes.map(async (t) => {
+                    const res = await fetch(`/api/uploads?themeId=${encodeURIComponent(t.id)}`, { cache: "no-store" });
+                    if (res.ok) {
+                        const data = (await res.json()) as FilesResponse;
+                        filesByTheme[t.id] = data.files;
+                    }
+                }),
+            );
+            setThemeFiles(filesByTheme);
             setLoadState({ kind: "idle" });
         } catch (err) {
             setLoadState({ kind: "error", message: err instanceof Error ? err.message : "Unknown error" });
@@ -98,8 +126,52 @@ export default function SubjectDetailPage() {
         setLoadState({ kind: "error", message: typeof maybeJson?.error === "string" ? maybeJson.error : `Failed to delete topic (${res.status})` });
     }
 
+    function handleUploadClick(themeId: string) {
+        setUploadingThemeId(themeId);
+        fileInputRef.current?.click();
+    }
+
+    async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file || !uploadingThemeId) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("themeId", uploadingThemeId);
+
+        try {
+            const res = await fetch("/api/uploads", { method: "POST", body: formData });
+            if (!res.ok) {
+                const maybeJson = await res.json().catch(() => null);
+                throw new Error(typeof maybeJson?.error === "string" ? maybeJson.error : `Upload failed (${res.status})`);
+            }
+            const data = (await res.json()) as UploadResponse;
+            setThemeFiles((prev) => ({
+                ...prev,
+                [uploadingThemeId]: [data.file, ...(prev[uploadingThemeId] ?? [])],
+            }));
+        } catch (err) {
+            setLoadState({ kind: "error", message: err instanceof Error ? err.message : "Upload failed" });
+        } finally {
+            setUploadingThemeId(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    }
+
+    async function handleDeleteFile(themeId: string, fileId: string) {
+        const res = await fetch(`/api/uploads/${encodeURIComponent(fileId)}`, { method: "DELETE" });
+        if (res.status === 204) {
+            setThemeFiles((prev) => ({
+                ...prev,
+                [themeId]: (prev[themeId] ?? []).filter((f) => f.id !== fileId),
+            }));
+            return;
+        }
+        const maybeJson = await res.json().catch(() => null);
+        setLoadState({ kind: "error", message: typeof maybeJson?.error === "string" ? maybeJson.error : `Failed to delete file (${res.status})` });
+    }
+
     const actionButtons = [
-        { label: "Upload File" },
         { label: "Generate Summary" },
         { label: "Generate Flashcards" },
         { label: "Take Test" },
@@ -196,6 +268,15 @@ export default function SubjectDetailPage() {
                     </button>
                 </div>
             </aside>
+
+            {/* Hidden file input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                style={{ display: "none" }}
+                onChange={handleFileSelected}
+            />
 
             {/* Main content */}
             <main style={{ flex: 1, padding: "2.5rem 2rem" }}>
@@ -317,6 +398,26 @@ export default function SubjectDetailPage() {
                                                 borderTop: "1px solid var(--color-border)",
                                                 flexWrap: "wrap",
                                             }}>
+                                                {/* Upload File — functional */}
+                                                <button
+                                                    type="button"
+                                                    disabled={uploadingThemeId === theme.id}
+                                                    onClick={() => handleUploadClick(theme.id)}
+                                                    style={{
+                                                        padding: "0.4rem 0.875rem",
+                                                        background: "transparent",
+                                                        border: "1px solid var(--color-border-solid)",
+                                                        borderRadius: "3px",
+                                                        fontSize: "0.75rem",
+                                                        color: "var(--color-text-primary)",
+                                                        cursor: uploadingThemeId === theme.id ? "wait" : "pointer",
+                                                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                                                    }}
+                                                >
+                                                    {uploadingThemeId === theme.id ? "Uploading…" : "Upload File"}
+                                                </button>
+
+                                                {/* Remaining buttons — disabled placeholders */}
                                                 {actionButtons.map((action) => (
                                                     <button
                                                         key={action.label}
@@ -339,6 +440,61 @@ export default function SubjectDetailPage() {
                                                     </button>
                                                 ))}
                                             </div>
+
+                                            {/* Uploaded files */}
+                                            {(themeFiles[theme.id] ?? []).length > 0 && (
+                                                <div style={{
+                                                    marginTop: "0.75rem",
+                                                    paddingTop: "0.75rem",
+                                                    borderTop: "1px solid var(--color-border)",
+                                                }}>
+                                                    <p style={{ fontSize: "0.7rem", fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-accent)", marginBottom: "0.5rem" }}>
+                                                        Files
+                                                    </p>
+                                                    <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+                                                        {(themeFiles[theme.id] ?? []).map((file) => (
+                                                            <li
+                                                                key={file.id}
+                                                                style={{
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    justifyContent: "space-between",
+                                                                    padding: "0.4rem 0.625rem",
+                                                                    background: "var(--color-sidebar-bg)",
+                                                                    borderRadius: "3px",
+                                                                    fontSize: "0.8125rem",
+                                                                }}
+                                                            >
+                                                                <span style={{
+                                                                    color: "var(--color-text-primary)",
+                                                                    fontWeight: 400,
+                                                                    overflow: "hidden",
+                                                                    textOverflow: "ellipsis",
+                                                                    whiteSpace: "nowrap",
+                                                                    minWidth: 0,
+                                                                }}>
+                                                                    {file.filename}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => { if (window.confirm(`Delete "${file.filename}"?`)) void handleDeleteFile(theme.id, file.id); }}
+                                                                    style={{
+                                                                        marginLeft: "0.5rem",
+                                                                        padding: "0.2rem 0.5rem",
+                                                                        background: "transparent",
+                                                                        border: "none",
+                                                                        fontSize: "0.75rem",
+                                                                        color: "var(--color-text-muted)",
+                                                                        cursor: "pointer",
+                                                                        flexShrink: 0,
+                                                                    }}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
                                         </li>
                                     ))}
                                 </ul>
