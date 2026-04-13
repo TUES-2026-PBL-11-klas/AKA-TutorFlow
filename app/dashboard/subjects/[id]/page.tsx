@@ -174,7 +174,6 @@ export default function SubjectDetailPage() {
     const actionButtons = [
         { label: "Generate Summary" },
         { label: "Generate Flashcards" },
-        { label: "Take Test" },
     ];
 
     return (
@@ -416,6 +415,24 @@ export default function SubjectDetailPage() {
                                                 >
                                                     {uploadingThemeId === theme.id ? "Uploading…" : "Upload File"}
                                                 </button>
+
+                                                {/* Take Test — functional link */}
+                                                <Link
+                                                    href={`/dashboard/subjects/${id}/themes/${theme.id}/test`}
+                                                    style={{
+                                                        padding: "0.4rem 0.875rem",
+                                                        background: "transparent",
+                                                        border: "1px solid var(--color-border-solid)",
+                                                        borderRadius: "3px",
+                                                        fontSize: "0.75rem",
+                                                        color: "var(--color-text-primary)",
+                                                        textDecoration: "none",
+                                                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                                                        display: "inline-block",
+                                                    }}
+                                                >
+                                                    Take Test
+                                                </Link>
 
                                                 {/* Remaining buttons — disabled placeholders */}
                                                 {actionButtons.map((action) => (

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TutorFlow Logo Concepts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+            font-size: 2.5em;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .logos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .logo-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .logo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+        
+        .logo-display {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        svg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .logo-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .logo-description {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .color-variants {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .color-variant {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .color-variant:hover {
+            transform: scale(1.1);
+        }
+        
+        .primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .tertiary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TutorFlow Logo Concepts</h1>
+        
+        <div class="logos-grid">
+            <!-- Logo 1: Flow River with Paths -->
+            <div class="logo-card">
+                <div class="logo-display">
+                    <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Main river path -->
+                        <path d="M90 20 Q 70 40 70 70 Q 70 100 90 110 Q 110 100 110 70 Q 110 40 90 20" fill="none" stroke="url(#grad1)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                        
+                        <!-- Left branch -->
+                        <path d="M70 70 Q 50 80 40 100" fill="none" stroke="#667eea" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+                        
+                        <!-- Right branch -->
+                        <path d="M110 70 Q 130 80 140 100" fill="none" stroke="#764ba2" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+                        
+                        <!-- Main river continues -->
+                        <path d="M90 110 Q 90 130 90 160" fill="none" stroke="#667eea" stroke-width="8" stroke-linecap="round"/>
+                        
+                        <!-- Accent circles -->
+                        <circle cx="90" cy="30" r="4" fill="#764ba2"/>
+                        <circle cx="90" cy="160" r="5" fill="#667eea"/>
+                        
+                        <defs>
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-title">Flow & Growth</div>
+                <div class="logo-description">Represents learning journey with branching paths and continuous progress downstream</div>
+            </div>
+            
+            <!-- Logo 2: Brain with Flowing Lines -->
+            <div class="logo-card">
+                <div class="logo-display">
+                    <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Brain outline -->
+                        <path d="M50 90 C 50 60 65 40 90 40 C 115 40 130 60 130 90" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+                        
+                        <!-- Brain lobes left -->
+                        <circle cx="65" cy="75" r="15" fill="#667eea" opacity="0.8"/>
+                        <circle cx="65" cy="105" r="15" fill="#667eea" opacity="0.6"/>
+                        
+                        <!-- Brain lobes right -->
+                        <circle cx="115" cy="75" r="15" fill="#764ba2" opacity="0.8"/>
+                        <circle cx="115" cy="105" r="15" fill="#764ba2" opacity="0.6"/>
+                        
+                        <!-- Center brain lobe -->
+                        <circle cx="90" cy="85" r="18" fill="#667eea" opacity="0.9"/>
+                        
+                        <!-- Flowing waves from brain -->
+                        <path d="M50 130 Q 60 120 70 130 T 90 130 T 110 130 T 130 130" fill="none" stroke="#764ba2" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M45 150 Q 60 140 75 150 T 105 150 T 135 150" fill="none" stroke="#667eea" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+                        
+                        <!-- Accent dots -->
+                        <circle cx="90" cy="85" r="3" fill="white"/>
+                    </svg>
+                </div>
+                <div class="logo-title">Mind Flow</div>
+                <div class="logo-description">Brain symbolizing learning with flowing waves representing knowledge transfer</div>
+            </div>
+            
+            <!-- Logo 3: Geometric T+F -->
+            <div class="logo-card">
+                <div class="logo-display">
+                    <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Vertical stem (T and continuation) -->
+                        <rect x="75" y="35" width="30" height="110" rx="6" fill="url(#grad3)"/>
+                        
+                        <!-- Horizontal top (T) -->
+                        <rect x="50" y="35" width="80" height="20" rx="6" fill="#667eea"/>
+                        
+                        <!-- Flowing curves (F suggestion) -->
+                        <path d="M 55 80 Q 50 100 60 120" fill="none" stroke="#764ba2" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
+                        <path d="M 125 80 Q 130 100 120 120" fill="none" stroke="#764ba2" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
+                        
+                        <!-- Bottom accent -->
+                        <circle cx="90" cy="155" r="6" fill="#667eea"/>
+                        
+                        <defs>
+                            <linearGradient id="grad3" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-title">Geometric Flow</div>
+                <div class="logo-description">Modern, minimalist mark combining T&F letterforms with flowing curves</div>
+            </div>
+            
+            <!-- Logo 4: Ascending Steps -->
+            <div class="logo-card">
+                <div class="logo-display">
+                    <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Step 1 -->
+                        <rect x="40" y="120" width="35" height="35" rx="4" fill="#667eea" opacity="0.6"/>
+                        
+                        <!-- Step 2 -->
+                        <rect x="82.5" y="95" width="35" height="35" rx="4" fill="#667eea" opacity="0.8"/>
+                        
+                        <!-- Step 3 -->
+                        <rect x="125" y="70" width="35" height="35" rx="4" fill="#764ba2"/>
+                        
+                        <!-- Flow lines connecting steps -->
+                        <path d="M 75 120 Q 85 110 117.5 95" fill="none" stroke="#667eea" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M 117.5 95 Q 125 80 160 65" fill="none" stroke="#764ba2" stroke-width="3" stroke-linecap="round"/>
+                        
+                        <!-- Additional flow elements -->
+                        <circle cx="90" cy="140" r="3" fill="#667eea"/>
+                        <circle cx="142.5" cy="75" r="4" fill="#764ba2"/>
+                        
+                        <!-- Arrow tip -->
+                        <path d="M 160 65 L 165 55 L 160 58" fill="#764ba2"/>
+                    </svg>
+                </div>
+                <div class="logo-title">Progress Stairs</div>
+                <div class="logo-description">Ascending steps represent student advancement with flowing connectors</div>
+            </div>
+            
+            <!-- Logo 5: Circular Flow -->
+            <div class="logo-card">
+                <div class="logo-display">
+                    <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Outer circle -->
+                        <circle cx="90" cy="90" r="65" fill="none" stroke="#667eea" stroke-width="2" opacity="0.3" stroke-dasharray="5,5"/>
+                        
+                        <!-- Main circular flow -->
+                        <path d="M 90 30 A 60 60 0 0 1 155 90 A 60 60 0 0 1 90 150 A 60 60 0 0 1 25 90 A 60 60 0 0 1 90 30" 
+                              fill="none" stroke="url(#grad5)" stroke-width="8" stroke-linecap="round"/>
+                        
+                        <!-- Inner decorative elements -->
+                        <circle cx="90" cy="60" r="8" fill="#667eea"/>
+                        <circle cx="120" cy="90" r="7" fill="#764ba2"/>
+                        <circle cx="90" cy="120" r="8" fill="#667eea"/>
+                        <circle cx="60" cy="90" r="7" fill="#764ba2"/>
+                        
+                        <!-- Center point -->
+                        <circle cx="90" cy="90" r="12" fill="white" stroke="#667eea" stroke-width="2"/>
+                        <circle cx="90" cy="90" r="6" fill="#667eea" opacity="0.7"/>
+                        
+                        <defs>
+                            <linearGradient id="grad5" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#764ba2;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#667eea;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-title">Continuous Cycle</div>
+                <div class="logo-description">Circular flow representing lifelong learning and continuous improvement</div>
+            </div>
+            
+            <!-- Logo 6: T-Letter Modern -->
+            <div class="logo-card">
+                <div class="logo-display">
+                    <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Horizontal bar with gradient -->
+                        <rect x="35" y="40" width="110" height="18" rx="9" fill="url(#grad6)"/>
+                        
+                        <!-- Vertical bar with gradient -->
+                        <rect x="77" y="58" width="26" height="95" rx="13" fill="url(#grad6b)"/>
+                        
+                        <!-- Flowing accents left -->
+                        <path d="M 40 65 Q 35 80 40 95" fill="none" stroke="#667eea" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+                        
+                        <!-- Flowing accents right -->
+                        <path d="M 140 65 Q 145 80 140 95" fill="none" stroke="#764ba2" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+                        
+                        <!-- Bottom accent flourish -->
+                        <ellipse cx="90" cy="165" rx="20" ry="8" fill="#667eea" opacity="0.5"/>
+                        
+                        <defs>
+                            <linearGradient id="grad6" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="grad6b" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#764ba2;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#667eea;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-title">T-Flow Mark</div>
+                <div class="logo-description">Bold 'T' lettermark with flowing accents, clean and memorable for branding</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
