@@ -1,5 +1,9 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(gh pr *)",
+      "Read(//tmp/**)"
+    ],
     "additionalDirectories": [
       "/Users/kristiyankulekov/Documents/GitHub/TutorFlow/components"
     ]

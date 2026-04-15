@@ -10,6 +10,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@google/genai": "^1.50.1",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",
     "@supabase/ssr": "^0.10.0",

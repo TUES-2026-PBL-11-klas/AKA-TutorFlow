@@ -7,6 +7,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
+type FileStatus = "PENDING" | "PROCESSING" | "READY" | "FAILED";
+
 type UploadedFileDto = {
     id: string;
     themeId: string | null;
@@ -14,6 +16,8 @@ type UploadedFileDto = {
     url: string;
     mimeType: string;
     sizeBytes: number;
+    status: FileStatus;
+    statusError: string | null;
     createdAt: string;
 };
 
@@ -146,15 +150,36 @@ export default function SubjectDetailPage() {
                 throw new Error(typeof maybeJson?.error === "string" ? maybeJson.error : `Upload failed (${res.status})`);
             }
             const data = (await res.json()) as UploadResponse;
+            const themeIdForFile = uploadingThemeId;
             setThemeFiles((prev) => ({
                 ...prev,
-                [uploadingThemeId]: [data.file, ...(prev[uploadingThemeId] ?? [])],
+                [themeIdForFile]: [data.file, ...(prev[themeIdForFile] ?? [])],
             }));
+            // Fire-and-forget ingestion (runs in its own Lambda invocation on Amplify)
+            void fetch(`/api/ingest/${encodeURIComponent(data.file.id)}`, { method: "POST" }).catch(() => {});
+            // Poll for status until it reaches a terminal state
+            void pollFileStatus(themeIdForFile, data.file.id);
         } catch (err) {
             setLoadState({ kind: "error", message: err instanceof Error ? err.message : "Upload failed" });
         } finally {
             setUploadingThemeId(null);
             if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    }
+
+    async function pollFileStatus(themeId: string, fileId: string) {
+        for (let i = 0; i < 30; i++) {
+            await new Promise((r) => setTimeout(r, 2000));
+            const res = await fetch(`/api/uploads?themeId=${encodeURIComponent(themeId)}`, { cache: "no-store" });
+            if (!res.ok) continue;
+            const data = (await res.json()) as FilesResponse;
+            const current = data.files.find((f) => f.id === fileId);
+            if (!current) return;
+            setThemeFiles((prev) => ({
+                ...prev,
+                [themeId]: (prev[themeId] ?? []).map((f) => (f.id === fileId ? current : f)),
+            }));
+            if (current.status === "READY" || current.status === "FAILED") return;
         }
     }
 
@@ -489,8 +514,13 @@ export default function SubjectDetailPage() {
                                                                     textOverflow: "ellipsis",
                                                                     whiteSpace: "nowrap",
                                                                     minWidth: 0,
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    gap: "0.5rem",
+                                                                    flex: 1,
                                                                 }}>
-                                                                    {file.filename}
+                                                                    <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{file.filename}</span>
+                                                                    <StatusBadge status={file.status} error={file.statusError} />
                                                                 </span>
                                                                 <button
                                                                     onClick={() => { if (window.confirm(`Delete "${file.filename}"?`)) void handleDeleteFile(theme.id, file.id); }}
@@ -521,5 +551,33 @@ export default function SubjectDetailPage() {
                 </div>
             </main>
         </div>
+    );
+}
+
+function StatusBadge({ status, error }: { status: FileStatus; error: string | null }) {
+    const styles: Record<FileStatus, { bg: string; fg: string; label: string }> = {
+        PENDING: { bg: "var(--color-border)", fg: "var(--color-text-muted)", label: "Pending" },
+        PROCESSING: { bg: "var(--color-border)", fg: "var(--color-text-secondary)", label: "Processing…" },
+        READY: { bg: "var(--color-accent)", fg: "var(--color-cream)", label: "Ready" },
+        FAILED: { bg: "#fee", fg: "#c33", label: "Failed" },
+    };
+    const s = styles[status];
+    return (
+        <span
+            title={status === "FAILED" && error ? error : undefined}
+            style={{
+                padding: "0.1rem 0.4rem",
+                fontSize: "0.65rem",
+                background: s.bg,
+                color: s.fg,
+                borderRadius: "10px",
+                flexShrink: 0,
+                fontWeight: 500,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+            }}
+        >
+            {s.label}
+        </span>
     );
 }

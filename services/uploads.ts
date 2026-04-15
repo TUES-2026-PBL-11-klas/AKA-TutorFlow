@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+export type FileStatusDto = "PENDING" | "PROCESSING" | "READY" | "FAILED";
+
 export type UploadedFileDto = {
     id: string;
     themeId: string | null;
@@ -7,8 +9,22 @@ export type UploadedFileDto = {
     url: string;
     mimeType: string;
     sizeBytes: number;
+    status: FileStatusDto;
+    statusError: string | null;
     createdAt: string;
 };
+
+const SELECT = {
+    id: true,
+    themeId: true,
+    filename: true,
+    url: true,
+    mimeType: true,
+    sizeBytes: true,
+    status: true,
+    statusError: true,
+    createdAt: true,
+} as const;
 
 export async function createUploadedFile(
     userId: string,
@@ -26,7 +42,7 @@ export async function createUploadedFile(
 
     const file = await prisma.uploadedFile.create({
         data: { userId, themeId, filename, url, mimeType, sizeBytes },
-        select: { id: true, themeId: true, filename: true, url: true, mimeType: true, sizeBytes: true, createdAt: true },
+        select: SELECT,
     });
 
     return { ...file, createdAt: file.createdAt.toISOString() };
@@ -36,7 +52,7 @@ export async function listUploadedFiles(userId: string, themeId: string): Promis
     const files = await prisma.uploadedFile.findMany({
         where: { themeId, user: { id: userId } },
         orderBy: { createdAt: "desc" },
-        select: { id: true, themeId: true, filename: true, url: true, mimeType: true, sizeBytes: true, createdAt: true },
+        select: SELECT,
     });
 
     return files.map((f) => ({ ...f, createdAt: f.createdAt.toISOString() }));
