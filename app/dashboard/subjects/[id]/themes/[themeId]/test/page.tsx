@@ -12,7 +12,7 @@ type TestsResponse = { tests: TestMaterialDto[] };
 
 type PageState =
     | { kind: "loading" }
-    | { kind: "no-tests" }
+    | { kind: "generating" }
     | { kind: "test-list"; tests: TestMaterialDto[] }
     | { kind: "taking"; test: TestMaterialDto; currentQ: number; answers: Record<string, string> }
     | { kind: "submitting"; test: TestMaterialDto; currentQ: number; answers: Record<string, string> }
@@ -57,13 +57,7 @@ export default function TestPage() {
 
             const { tests } = testsData;
 
-            if (tests.length === 0) {
-                setState({ kind: "no-tests" });
-            } else if (tests.length === 1) {
-                setState({ kind: "taking", test: tests[0], currentQ: 0, answers: {} });
-            } else {
-                setState({ kind: "test-list", tests });
-            }
+            setState({ kind: "test-list", tests });
         } catch (err) {
             setState({ kind: "error", message: err instanceof Error ? err.message : "Unknown error" });
         }
@@ -79,6 +73,24 @@ export default function TestPage() {
 
     function startTest(test: TestMaterialDto) {
         setState({ kind: "taking", test, currentQ: 0, answers: {} });
+    }
+
+    async function handleGenerate() {
+        setState({ kind: "generating" });
+        try {
+            const res = await fetch("/api/ai/test", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ themeId, count: 5 }),
+            });
+            if (!res.ok) {
+                const maybeJson = await res.json().catch(() => null);
+                throw new Error(typeof maybeJson?.error === "string" ? maybeJson.error : `Generation failed (${res.status})`);
+            }
+            await loadData();
+        } catch (err) {
+            setState({ kind: "error", message: err instanceof Error ? err.message : "Generation failed" });
+        }
     }
 
     function selectAnswer(questionId: string, option: string) {
@@ -259,8 +271,8 @@ export default function TestPage() {
                             <div className="global-error">{state.message}</div>
                         )}
 
-                        {/* No tests */}
-                        {state.kind === "no-tests" && (
+                        {/* Generating */}
+                        {state.kind === "generating" && (
                             <div style={{
                                 background: "var(--color-card)",
                                 border: "1px solid var(--color-border)",
@@ -268,17 +280,8 @@ export default function TestPage() {
                                 padding: "2.5rem 2rem",
                                 textAlign: "center",
                             }}>
-                                <p style={{
-                                    fontFamily: "var(--font-lora), 'Lora', serif",
-                                    fontSize: "1.125rem",
-                                    color: "var(--color-text-primary)",
-                                    fontWeight: 500,
-                                    marginBottom: "0.5rem",
-                                }}>
-                                    No tests available yet
-                                </p>
                                 <p style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)", fontWeight: 300 }}>
-                                    Tests for this topic will appear here once generated.
+                                    Generating test… this may take 10–30 seconds.
                                 </p>
                             </div>
                         )}
@@ -286,42 +289,66 @@ export default function TestPage() {
                         {/* Test list (multiple tests) */}
                         {state.kind === "test-list" && (
                             <div>
-                                <p style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)", marginBottom: "1rem", fontWeight: 300 }}>
-                                    {state.tests.length} tests available for this topic.
-                                </p>
-                                <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "0.625rem" }}>
-                                    {state.tests.map((test, i) => (
-                                        <li key={test.id}>
-                                            <button
-                                                type="button"
-                                                onClick={() => startTest(test)}
-                                                style={{
-                                                    width: "100%",
-                                                    background: "var(--color-card)",
-                                                    border: "1px solid var(--color-border)",
-                                                    borderRadius: "4px",
-                                                    padding: "1rem 1.25rem",
-                                                    textAlign: "left",
-                                                    cursor: "pointer",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "space-between",
-                                                    transition: "border-color 0.15s",
-                                                }}
-                                            >
-                                                <div>
-                                                    <p style={{ fontWeight: 500, fontSize: "0.9375rem", color: "var(--color-text-primary)" }}>
-                                                        Test {i + 1}
-                                                    </p>
-                                                    <p style={{ marginTop: "0.2rem", fontSize: "0.8125rem", color: "var(--color-text-secondary)", fontWeight: 300 }}>
-                                                        {test.questions.length} question{test.questions.length !== 1 ? "s" : ""} · {new Date(test.createdAt).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                                <span style={{ fontSize: "0.8125rem", color: "var(--color-accent)", fontWeight: 500 }}>Start →</span>
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", gap: "1rem" }}>
+                                    <p style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)", fontWeight: 300 }}>
+                                        {state.tests.length === 0
+                                            ? "No tests for this topic yet."
+                                            : `${state.tests.length} test${state.tests.length !== 1 ? "s" : ""} available for this topic.`}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => void handleGenerate()}
+                                        style={{
+                                            padding: "0.5rem 1rem",
+                                            background: "var(--color-accent)",
+                                            color: "var(--color-cream)",
+                                            border: "none",
+                                            borderRadius: "3px",
+                                            fontSize: "0.8125rem",
+                                            fontWeight: 500,
+                                            cursor: "pointer",
+                                            whiteSpace: "nowrap",
+                                            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                                        }}
+                                    >
+                                        + Generate New Test
+                                    </button>
+                                </div>
+                                {state.tests.length > 0 && (
+                                    <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+                                        {state.tests.map((test, i) => (
+                                            <li key={test.id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => startTest(test)}
+                                                    style={{
+                                                        width: "100%",
+                                                        background: "var(--color-card)",
+                                                        border: "1px solid var(--color-border)",
+                                                        borderRadius: "4px",
+                                                        padding: "1rem 1.25rem",
+                                                        textAlign: "left",
+                                                        cursor: "pointer",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "space-between",
+                                                        transition: "border-color 0.15s",
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <p style={{ fontWeight: 500, fontSize: "0.9375rem", color: "var(--color-text-primary)" }}>
+                                                            Test {i + 1}
+                                                        </p>
+                                                        <p style={{ marginTop: "0.2rem", fontSize: "0.8125rem", color: "var(--color-text-secondary)", fontWeight: 300 }}>
+                                                            {test.questions.length} question{test.questions.length !== 1 ? "s" : ""} · {new Date(test.createdAt).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                    <span style={{ fontSize: "0.8125rem", color: "var(--color-accent)", fontWeight: 500 }}>Start →</span>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         )}
 

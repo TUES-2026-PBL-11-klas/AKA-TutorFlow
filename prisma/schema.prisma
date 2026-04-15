@@ -42,6 +42,7 @@ model Theme {
   subject       Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   materials     Material[]
   uploadedFiles UploadedFile[]
+  fileChunks    FileChunk[]
 }
 
 // ─── Materials ────────────────────────────────────────────────────────────────
@@ -94,17 +95,39 @@ model TestAttempt {
 // ─── Uploaded files ───────────────────────────────────────────────────────────
 
 model UploadedFile {
-  id        String   @id @default(cuid())
-  userId    String
-  themeId   String?
-  filename  String
-  url       String
-  mimeType  String
-  sizeBytes Int
-  createdAt DateTime @default(now())
+  id          String      @id @default(cuid())
+  userId      String
+  themeId     String?
+  filename    String
+  url         String
+  mimeType    String
+  sizeBytes   Int
+  status      FileStatus  @default(PENDING)
+  statusError String?
+  createdAt   DateTime    @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  theme     Theme?   @relation(fields: [themeId], references: [id], onDelete: SetNull)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme     Theme?      @relation(fields: [themeId], references: [id], onDelete: SetNull)
+  chunks    FileChunk[]
+}
+
+// ─── File chunks (RAG / pgvector) ─────────────────────────────────────────────
+
+model FileChunk {
+  id         String   @id @default(cuid())
+  fileId     String
+  themeId    String
+  userId     String
+  chunkIndex Int
+  content    String
+  embedding  Unsupported("vector(1536)")
+  createdAt  DateTime @default(now())
+
+  file  UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  theme Theme        @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@index([themeId])
+  @@index([fileId])
 }
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -113,4 +136,11 @@ enum MaterialType {
   SUMMARY
   FLASHCARD
   TEST
+}
+
+enum FileStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
 }
