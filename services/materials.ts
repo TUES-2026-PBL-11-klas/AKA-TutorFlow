@@ -169,6 +169,59 @@ export async function createFlashcardsMaterial(args: {
     };
 }
 
+// ─── List helpers ────────────────────────────────────────────────────────────
+
+export async function listSummariesForTheme(
+    userId: string,
+    themeId: string,
+): Promise<MaterialSummaryDto[]> {
+    const materials = await prisma.material.findMany({
+        where: {
+            themeId,
+            type: "SUMMARY",
+            theme: { subject: { userId } },
+        },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, themeId: true, content: true, createdAt: true },
+    });
+
+    return materials.map((m) => ({
+        id: m.id,
+        themeId: m.themeId,
+        type: "SUMMARY" as const,
+        markdown: (m.content as { markdown: string }).markdown,
+        createdAt: m.createdAt.toISOString(),
+    }));
+}
+
+export async function listFlashcardsForTheme(
+    userId: string,
+    themeId: string,
+): Promise<MaterialFlashcardsDto[]> {
+    const materials = await prisma.material.findMany({
+        where: {
+            themeId,
+            type: "FLASHCARD",
+            theme: { subject: { userId } },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+            id: true,
+            themeId: true,
+            createdAt: true,
+            flashcards: { select: { id: true, front: true, back: true } },
+        },
+    });
+
+    return materials.map((m) => ({
+        id: m.id,
+        themeId: m.themeId,
+        type: "FLASHCARD" as const,
+        flashcards: m.flashcards,
+        createdAt: m.createdAt.toISOString(),
+    }));
+}
+
 // ─── Test (MCQ) ───────────────────────────────────────────────────────────────
 
 const TEST_SCHEMA = {
