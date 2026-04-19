@@ -501,7 +501,7 @@ export default function DBDiagram() {
       {/* Canvas */}
       <svg
         ref={svgRef}
-        style={{ width: "100%", height: "100%", cursor: panRef.current ? "grabbing" : "default" }}
+        style={{ width: "100%", height: "100%" }}
         onWheel={onWheel}
         onPointerDown={onBgPointerDown}
       >

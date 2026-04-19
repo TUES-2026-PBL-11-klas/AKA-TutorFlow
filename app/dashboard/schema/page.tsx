@@ -255,12 +255,6 @@ export default function SchemaPage() {
     }
   }, []);
 
-  // ── Zoom ──
-  const onWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    setZoom((z) => Math.min(2, Math.max(0.3, z - e.deltaY * 0.001)));
-  }, []);
-
   // attach non-passive wheel listener
   useEffect(() => {
     const el = canvasRef.current;
@@ -274,7 +268,7 @@ export default function SchemaPage() {
   }, []);
 
   // ── Compute line endpoints ──
-  function getRowCenter(tableName: string, colName: string, side: "left" | "right") {
+  function getRowCenterFromRefs(tableName: string, colName: string, side: "left" | "right") {
     const key = `${tableName}.${colName}`;
     const el = rowRefs.current[key];
     const canvas = canvasRef.current;
@@ -293,12 +287,25 @@ export default function SchemaPage() {
     return { x, y };
   }
 
-  // force re-render for SVG lines after mount
-  const [, forceUpdate] = useState(0);
+  // Compute line endpoints in an effect (not during render) to avoid accessing refs during render
+  type LineData = { from: { x: number; y: number }; to: { x: number; y: number }; label: string; relIndex: number };
+  const [lineData, setLineData] = useState<LineData[]>([]);
   useEffect(() => {
-    const t = setTimeout(() => forceUpdate((n) => n + 1), 50);
+    const t = setTimeout(() => {
+      const lines: LineData[] = relations.map((rel, ri) => {
+        const fromPos = positions[rel.from];
+        const toPos = positions[rel.to];
+        if (!fromPos || !toPos) return null;
+        const fromRight = fromPos.x < toPos.x;
+        const from = getRowCenterFromRefs(rel.from, rel.fromCol, fromRight ? "right" : "left");
+        const to = getRowCenterFromRefs(rel.to, rel.toCol, fromRight ? "left" : "right");
+        return { from, to, label: rel.label, relIndex: ri };
+      }).filter(Boolean) as LineData[];
+      setLineData(lines);
+    }, 50);
     return () => clearTimeout(t);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [positions, zoom]);
 
   return (
     <div className="h-screen w-screen overflow-hidden" style={{ background: "var(--color-cream)" }}>
@@ -383,27 +390,21 @@ export default function SchemaPage() {
             height: "2000px",
           }}
         >
-          {/* SVG relationship lines */}
+          {/* SVG relationship lines (computed in effect, not during render) */}
           <svg
             className="absolute inset-0 pointer-events-none"
             width="3000"
             height="2000"
             style={{ zIndex: 0 }}
           >
-            {relations.map((rel, ri) => {
-              const fromPos = positions[rel.from];
-              const toPos = positions[rel.to];
-              if (!fromPos || !toPos) return null;
-
+            {lineData.map((line) => {
+              const { from, to, label, relIndex: ri } = line;
               const isHighlighted = hoveredRel === ri;
 
-              // Determine which side to connect from
-              const fromRight = fromPos.x < toPos.x;
-              const from = getRowCenter(rel.from, rel.fromCol, fromRight ? "right" : "left");
-              const to = getRowCenter(rel.to, rel.toCol, fromRight ? "left" : "right");
-
               if (from.x === 0 && from.y === 0) {
-                // fallback before refs are ready
+                const fromPos = positions[relations[ri].from];
+                const toPos = positions[relations[ri].to];
+                if (!fromPos || !toPos) return null;
                 const fCenter = { x: fromPos.x + CARD_W / 2, y: fromPos.y + 60 };
                 const tCenter = { x: toPos.x + CARD_W / 2, y: toPos.y + 20 };
                 const mx = (fCenter.x + tCenter.x) / 2;
@@ -420,6 +421,7 @@ export default function SchemaPage() {
               }
 
               const dx = to.x - from.x;
+              const fromRight = dx > 0;
               const cpOffset = Math.min(Math.abs(dx) * 0.5, 120);
               const cp1x = from.x + (fromRight ? cpOffset : -cpOffset);
               const cp2x = to.x + (fromRight ? -cpOffset : cpOffset);
@@ -434,9 +436,7 @@ export default function SchemaPage() {
                     fill="none"
                     stroke={isHighlighted ? "#a08050" : "rgba(160,130,80,0.3)"}
                     strokeWidth={isHighlighted ? 2.5 : 1.5}
-                    strokeDasharray={isHighlighted ? "none" : "none"}
                   />
-                  {/* Cardinality label */}
                   <rect
                     x={midX - 18}
                     y={midY - 9}
@@ -455,17 +455,14 @@ export default function SchemaPage() {
                     fontWeight="600"
                     fill={isHighlighted ? "#fff" : "#8a7560"}
                   >
-                    {rel.label}
+                    {label}
                   </text>
-                  {/* "1" side marker (the target/parent) */}
                   <circle
                     cx={to.x}
                     cy={to.y}
                     r={3}
                     fill={isHighlighted ? "#a08050" : "rgba(160,130,80,0.5)"}
                   />
-                  {/* "N" side marker (the child FK) */}
-                  {/* crow's foot: three short lines */}
                   {(() => {
                     const angle = Math.atan2(from.y - to.y, from.x - to.x);
                     const len = 8;
@@ -473,30 +470,9 @@ export default function SchemaPage() {
                     const color = isHighlighted ? "#a08050" : "rgba(160,130,80,0.5)";
                     return (
                       <>
-                        <line
-                          x1={from.x}
-                          y1={from.y}
-                          x2={from.x + len * Math.cos(angle + spread)}
-                          y2={from.y + len * Math.sin(angle + spread)}
-                          stroke={color}
-                          strokeWidth="1.5"
-                        />
-                        <line
-                          x1={from.x}
-                          y1={from.y}
-                          x2={from.x + len * Math.cos(angle)}
-                          y2={from.y + len * Math.sin(angle)}
-                          stroke={color}
-                          strokeWidth="1.5"
-                        />
-                        <line
-                          x1={from.x}
-                          y1={from.y}
-                          x2={from.x + len * Math.cos(angle - spread)}
-                          y2={from.y + len * Math.sin(angle - spread)}
-                          stroke={color}
-                          strokeWidth="1.5"
-                        />
+                        <line x1={from.x} y1={from.y} x2={from.x + len * Math.cos(angle + spread)} y2={from.y + len * Math.sin(angle + spread)} stroke={color} strokeWidth="1.5" />
+                        <line x1={from.x} y1={from.y} x2={from.x + len * Math.cos(angle)} y2={from.y + len * Math.sin(angle)} stroke={color} strokeWidth="1.5" />
+                        <line x1={from.x} y1={from.y} x2={from.x + len * Math.cos(angle - spread)} y2={from.y + len * Math.sin(angle - spread)} stroke={color} strokeWidth="1.5" />
                       </>
                     );
                   })()}

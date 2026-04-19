@@ -10,8 +10,6 @@ import type { SubjectDto } from "@/services/subjects";
 
 type SubjectsResponse = { subjects: SubjectDto[] };
 type SummariesResponse = { summaries: MaterialSummaryDto[] };
-type GenerateResponse = { material: MaterialSummaryDto };
-
 type PageState =
     | { kind: "loading" }
     | { kind: "generating" }

@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export function AuthCard({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    ref.current?.classList.add("visible");
+  }, []);
 
   return (
-    <div className={`auth-card${mounted ? " visible" : ""}`}>{children}</div>
+    <div ref={ref} className="auth-card">{children}</div>
   );
 }
