@@ -196,10 +196,6 @@ export default function SubjectDetailPage() {
         setLoadState({ kind: "error", message: typeof maybeJson?.error === "string" ? maybeJson.error : `Failed to delete file (${res.status})` });
     }
 
-    const actionButtons = [
-        { label: "Generate Summary" },
-        { label: "Generate Flashcards" },
-    ];
 
     return (
         <div style={{ minHeight: "100vh", background: "var(--color-cream)", color: "var(--color-text-primary)", display: "flex" }}>
@@ -459,28 +455,41 @@ export default function SubjectDetailPage() {
                                                     Take Test
                                                 </Link>
 
-                                                {/* Remaining buttons — disabled placeholders */}
-                                                {actionButtons.map((action) => (
-                                                    <button
-                                                        key={action.label}
-                                                        type="button"
-                                                        disabled
-                                                        title="Coming soon"
-                                                        style={{
-                                                            padding: "0.4rem 0.875rem",
-                                                            background: "transparent",
-                                                            border: "1px solid var(--color-border-solid)",
-                                                            borderRadius: "3px",
-                                                            fontSize: "0.75rem",
-                                                            color: "var(--color-text-secondary)",
-                                                            cursor: "not-allowed",
-                                                            opacity: 0.7,
-                                                            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-                                                        }}
-                                                    >
-                                                        {action.label}
-                                                    </button>
-                                                ))}
+                                                {/* Summary */}
+                                                <Link
+                                                    href={`/dashboard/subjects/${id}/themes/${theme.id}/summary`}
+                                                    style={{
+                                                        padding: "0.4rem 0.875rem",
+                                                        background: "transparent",
+                                                        border: "1px solid var(--color-border-solid)",
+                                                        borderRadius: "3px",
+                                                        fontSize: "0.75rem",
+                                                        color: "var(--color-text-primary)",
+                                                        textDecoration: "none",
+                                                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                                                        display: "inline-block",
+                                                    }}
+                                                >
+                                                    Generate Summary
+                                                </Link>
+
+                                                {/* Flashcards */}
+                                                <Link
+                                                    href={`/dashboard/subjects/${id}/themes/${theme.id}/flashcards`}
+                                                    style={{
+                                                        padding: "0.4rem 0.875rem",
+                                                        background: "transparent",
+                                                        border: "1px solid var(--color-border-solid)",
+                                                        borderRadius: "3px",
+                                                        fontSize: "0.75rem",
+                                                        color: "var(--color-text-primary)",
+                                                        textDecoration: "none",
+                                                        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                                                        display: "inline-block",
+                                                    }}
+                                                >
+                                                    Generate Flashcards
+                                                </Link>
                                             </div>
 
                                             {/* Uploaded files */}
