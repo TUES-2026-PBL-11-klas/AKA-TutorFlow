@@ -7,15 +7,16 @@ import { GoogleGenAI, Type, type Schema } from "@google/genai";
 
 const API_KEY = process.env.GEMINI_API_KEY;
 
-if (!API_KEY && process.env.NODE_ENV !== "test") {
-    throw new Error("GEMINI_API_KEY is not set. Add it to your environment before starting the app.");
-}
-
 const EMBEDDING_MODEL = "gemini-embedding-2-preview";
 const GENERATION_MODEL = "gemini-2.5-flash";
 const EMBEDDING_DIM = 1536;
 
-const client = new GoogleGenAI({ apiKey: API_KEY ?? "missing" });
+function getClient() {
+    if (!API_KEY) {
+        throw new Error("GEMINI_API_KEY is not set. Add it to your environment before starting the app.");
+    }
+    return new GoogleGenAI({ apiKey: API_KEY });
+}
 
 export type EmbedPart =
     | { kind: "text"; text: string }
@@ -36,7 +37,7 @@ export async function embedParts(parts: EmbedPart[]): Promise<number[]> {
         },
     ];
 
-    const res = await client.models.embedContent({
+    const res = await getClient().models.embedContent({
         model: EMBEDDING_MODEL,
         contents,
         config: { outputDimensionality: EMBEDDING_DIM },
@@ -62,7 +63,7 @@ export async function generateText(
     prompt: string,
     options?: { temperature?: number; files?: GenerationFile[] },
 ): Promise<string> {
-    const res = await client.models.generateContent({
+    const res = await getClient().models.generateContent({
         model: GENERATION_MODEL,
         contents: [{ parts: buildGenerationParts(prompt, options?.files) }],
         config: { temperature: options?.temperature ?? 0.7 },
@@ -77,7 +78,7 @@ export async function generateJson<T>(
     schema: Schema,
     options?: { temperature?: number; files?: GenerationFile[] },
 ): Promise<T> {
-    const res = await client.models.generateContent({
+    const res = await getClient().models.generateContent({
         model: GENERATION_MODEL,
         contents: [{ parts: buildGenerationParts(prompt, options?.files) }],
         config: {
