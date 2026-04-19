@@ -1,0 +1,25 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+        - npx prisma generate
+        # Pull all secrets from AWS Secrets Manager at build time
+        - export NEXT_PUBLIC_SUPABASE_URL=$(aws secretsmanager get-secret-value --secret-id tutorflow/supabase-url --query SecretString --output text --region eu-west-1)
+        - export NEXT_PUBLIC_SUPABASE_ANON_KEY=$(aws secretsmanager get-secret-value --secret-id tutorflow/supabase-anon-key --query SecretString --output text --region eu-west-1)
+        - export SUPABASE_SERVICE_ROLE_KEY=$(aws secretsmanager get-secret-value --secret-id tutorflow/supabase-service-role-key --query SecretString --output text --region eu-west-1)
+        - export GEMINI_API_KEY=$(aws secretsmanager get-secret-value --secret-id tutorflow/gemini-api-key --query SecretString --output text --region eu-west-1)
+        - export DB_USER=$(aws secretsmanager get-secret-value --secret-id tutorflow/db-credentials --query SecretString --output text --region eu-west-1 | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).DB_USER)")
+        - export DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id tutorflow/db-credentials --query SecretString --output text --region eu-west-1 | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).DB_PASSWORD)")
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
